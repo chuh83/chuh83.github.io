@@ -1,0 +1,179 @@
+h1 { text-align:center; }
+
+/* Deselected lines and plot color */
+.line1 {
+    fill: none;
+    stroke: steelblue; 
+    color: steelblue;
+/*                fill: steelblue;*/
+    stroke-width: 2px;
+}
+
+.line2 {
+    fill: none;
+    stroke: darkorchid;
+    color: darkorchid;
+    stroke-width: 2px;
+}
+
+.line3 {
+    fill: none;
+    stroke: coral;
+    color: coral;
+    stroke-width: 2px;
+}
+
+.line4 {
+    fill: none;
+    stroke: forestgreen;
+    color: forestgreen;
+    stroke-width: 2px;
+}
+
+.line5 {
+    fill: none;
+    stroke: gold;
+    color: gold;
+    stroke-width: 2px;
+}
+
+/* Selected from legend */
+.line1F {
+    fill: steelblue;
+    stroke: steelblue; 
+    color: steelblue;
+    stroke-width: 2px;
+}
+
+.line2F {
+    fill: darkorchid;
+    stroke: darkorchid;
+    color: darkorchid;
+    stroke-width: 2px;
+}
+
+.line3F {
+    fill: coral;
+    stroke: coral;
+    color: coral;
+    stroke-width: 2px;
+}
+
+.line4F {
+    fill: forestgreen;
+    stroke: forestgreen;
+    color: forestgreen;
+    stroke-width: 2px;
+}
+
+.line5F {
+    fill: gold;
+    stroke: gold;
+    color: gold;
+    stroke-width: 2px;
+}
+
+.button {
+    margin: 1%;
+}
+
+/*
+svg rect {
+    height: 90px;
+    width: 180px;
+    fill: white;
+    stroke: black;
+}
+*/
+
+svg circle {
+    cx: 7px;
+    cy: 7px;
+    r: 5.4px;
+}
+
+.key {
+    max-height: 14px;
+    max-width: 14px;
+}
+
+#legend {
+/*    max-height: 50px;*/
+    max-width: 800px;
+}
+
+fieldset legend {
+    padding-bottom: 50;
+}
+
+#legend-contents p {
+/*
+    column-count: 5;
+    column-width: 20px;
+*/
+    float: left;
+    padding: 0px 10px 0px 10px;
+}
+
+.legend-text {
+    text-anchor: start;
+    font-style: italic;
+}
+
+/*
+#parameters-container {
+    align-content: center;
+    text-align: center;
+}
+*/
+
+.option-container {
+    float: left;
+    width: 47%;
+    padding: 1%
+}
+
+#option1-container {
+    border-right: medium solid lightgrey;
+}
+
+/*
+#option2-container {
+    border-left: thin solid lightgrey;
+}
+*/
+
+.option-title {text-align: center;}
+
+#graph-container {
+    clear: both;
+}
+
+#hydrograph {
+    clear: both;
+}
+
+#potential-box {
+    display: none;
+}
+
+hr {
+    border: thin solid lightgrey;
+    margin-bottom: 0;
+}
+
+#gauge {
+    max-width: 95%;
+}
+
+#potential-graphs {
+    margin-bottom: 15px;
+}
+
+.input-box {
+    max-width: 15%
+}
+
+.input-long {
+    max-width: 35%
+}

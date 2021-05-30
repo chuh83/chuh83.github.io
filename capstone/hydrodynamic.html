@@ -1,0 +1,877 @@
+<!Doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- This enables Bootstrap to be optimized for mobile devices -->
+    
+        <link rel="icon" type="image/png" href="images/flask_icon.png">
+        <script src="https://d3js.org/d3.v4.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        
+        <title>Predicting Baseflow (Test Page)</title>
+        <h1>Predicting Baseflow (Test Page)</h1>
+        
+        <style>
+            h1 { text-align:center; }
+            
+            .line1 {
+                fill: none;
+                stroke: steelblue; 
+                color: steelblue;
+/*                fill: steelblue;*/
+                stroke-width: 2px;
+            }
+            
+            .line2 {
+                fill: none;
+                stroke: darkorchid;
+                color: darkorchid;
+/*                fill: darkorchid;*/
+                stroke-width: 2px;
+            }
+            
+            .line3 {
+                fill: none;
+                stroke: coral;
+                color: coral;
+/*                fill: coral;*/
+                stroke-width: 2px;
+            }
+            
+            .line4 {
+                fill: none;
+                stroke: forestgreen;
+                color: forestgreen;
+/*                fill: forestgreen;*/
+                stroke-width: 2px;
+            }
+            
+            .button {
+                margin: 1%;
+            }
+            
+            svg rect {
+                height: 90px;
+                width: 180px;
+                fill: white;
+                stroke: black;
+            }
+            
+            svg circle {
+                cx: 660;
+/*                cy: 6px;*/
+                r: 5.4px;
+            }
+            
+            .legend-text {
+                text-anchor: start;
+                font-style: italic;
+            }
+            
+/*
+            #parameters-container {
+                align-content: center;
+                text-align: center;
+            }
+*/
+            
+            .option-container {
+                float: left;
+                width: 47%;
+                padding: 1%
+            }
+            
+            #option1-container {
+                border-right: medium solid lightgrey;
+            }
+            
+/*
+            #option2-container {
+                border-left: thin solid lightgrey;
+            }
+*/
+            
+            .option-title {text-align: center;}
+            
+            #graph-container {
+                clear: both;
+            }
+            
+            hr {
+                border: thin solid lightgrey;
+                margin-bottom: 0;
+            }
+            
+            #gauge {
+                max-width: 95%;
+            }
+            
+            #potential-graphs {
+                margin-bottom: 15px;
+            }
+            
+            .input-box {
+                max-width: 5%
+            }
+            
+            .input-long {
+                max-width: 20%
+            }
+        </style>
+    </head>
+    
+    <body>
+        <h2>About</h2>
+        <p>Using stream gauge data from the <a href="https://waterdata.usgs.gov/nwis/rt">USGS National Water Information System Database</a>, this website is able to find precipitation events and plot the hydrograph separation within the last 120 days. Users are also able to graph data from USGS if they have the site number and date range in mind. In the future, we hope to have a second graph on display, showing a prediction of future values. </p>
+    
+<!--
+        <hr/>
+        <div id="parameters-container">
+        </div>
+-->
+        <hr/>
+        <div id="option1-container" class="option-container">
+            <h2 class="option-title">Option 1 - Period Analysis</h2>
+            <p>Select a stream gauge:
+            <br/>
+            <select id="gauge">
+                <option value="06893620" id="06893620" selected="selected">06893620 Rock Creek at Kentucky Road in Independence, MO</option>
+                <option value="06893820" id="06893820">06893820 Little Blue R. at Lees Summit Rd in Independence</option>
+                <option value="06893890" id ="06893890">06893890 East Fork Little Blue River near Blue Springs, MO</option>
+                <option value="06893970" id="06893970">06893970 Spring Branch Ck at Holke Rd in Independence, MO</option>
+                <option value="06894000" id="06894000">06894000 Little Blue River near Lake City, MO</option>
+                <option value="06901500" id ="06901500">06901500 Locust Creek near Linneus, MO</option>
+                <option value="06934500" id="06934500">06934500 Missouri River at Hermann, MO</option>
+                <option value="07061270" id="07061270">07061270 East Fork Black River near Lesterville, MO</option>
+                <option value="07061290" id="07061290">07061290 E. Fk. Black R. bl Lower Taum Sauk Reservoir</option>
+            </select>
+            </p>
+            <form name="parameters">
+                <p>Number of days to analyze before today (max 120): 
+                <input type="text" name="period" class="input-box" value="100"></p>
+                <p>Minimum amount of precipitation (inches) to look for:
+                <input type="text" name="min-precip" class="input-box" value="0.05"></p>
+                <p>Number of days before precipitation event:
+                <input type="text" name="days-before" class="input-box" value="1"></p>
+                <p>Number of days after precipitation event:
+                <input type="text" name="days-after" class="input-box" value="5"></p>
+                
+<!--                <input type="button" onclick="dataOnCommand()" value="Find Graphs!">-->
+            </form>
+            <p><input type="button" onclick="jsonDataOnCommand()" value="Search"><span id="load-outcome"></span></p><p id="load-outcome-text"></p>
+            <hr/>
+            <h3>List of potential graphs:</h3>
+            <div id="potential-graphs"></div>
+        </div>
+        
+        <div id="option2-container" class="option-container">
+            <form name="custom">
+                <h2 class="option-title">Option 2 - Custom Graph</h2>
+                <p>Site Number: <input type="text" name="site-num" class="input-long" maxlength="8" value="06893620"></p>
+                <p>Start Date (YYYY-MM-DD): <input type="text" name="custom-start" class="input-long" value="2019-11-18"></p>
+                <p>End Date (YYYY-MM-DD): <input type="text" name="custom-end" class="input-long" value="2019-11-26"></p>
+                <p><input type="button" onclick="customGraph()" value="Plot"><span id="load-outcome2"></span></p><p id="load-outcome2-text"></p>
+            </form>
+        </div>
+        
+        <div id='graph-container'>
+            <hr/>
+            <h2 id='graph-title'>Example Graphs</h2>
+            <h3>Current Hydrograph</h3>
+<!--
+            <fieldset id="legend">
+                <legend><i>Legend</i></legend>
+                <div id="legend-contents">
+                    <p>
+                        <svg class="key"><circle class="line1"/></svg>
+                        <em class="line1"> Total Discharge </em>
+                        <br/>
+                        <svg class="key"><circle class="line2"/></svg>
+                        <em class="line2"> Precipitation </em>
+                        <br/>
+                        <svg class="key"><circle class="line3"/></svg>
+                        <em class="line3"> Baseflow Discharge </em>
+                        <br/>
+                        <svg class="key"><circle class="line4"/></svg>
+                        <em class="line4"> Event Flow Discharge </em>
+                    </p>
+                </div>
+            </fieldset>
+-->
+            <div class='graph' id='hydrograph'>
+                <img src="images/hydrograph_ex1.png"
+                     alt="Hydrograph1"
+                     title="Hydrograph1"><br>
+            </div>
+
+            <h3>Predicted Hydrograph</h3>
+            <div class='graph' id='predicted-graph'>
+                <img src="images/hydrograph_ex1.png"
+                     alt="FutureHydrograph1"
+                     title="FutureHydrograph1"><br>
+            </div>
+        </div>
+        
+        <script>
+            var margin = {top: 20, right: 50, bottom: 50, left: 50},
+                width = 1000 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+
+            //*********************************************
+            //****** All columns set to these vals ********
+            //*********************************************
+            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
+            var dischargeCol = "76944_00060";
+            var precipCol = "76946_00045";
+            var specCdtCol = "76948_00095";
+            var ce = 54;
+            var cb;
+
+            // set the ranges
+            var x = d3.scaleTime().range([0, width]);
+            var yl = d3.scaleLinear().range([height, 0]);
+            var yr = d3.scaleLinear().range([height, 0]);
+
+
+
+            // define the lines
+            var line1 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yl(d.discharge);} );
+
+            var line2 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yr(d.precip);} );
+            
+            var line3 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yl(d.baseflow);} );
+            
+            var line4 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yl(d.eventflow);} );
+            
+            var data;
+            var gaugeID = document.getElementById("gauge").value;
+            var gaugeFile = gaugeID + ".txt";
+            dataGrabber(gaugeFile, function(originalData) {
+//                var data = originalData;
+//                createGraph(data);  //initial page graph
+                createGraph(originalData);
+            });
+            
+            function dataGrabber(name, callback) {
+                d3.tsv("gauges/" + gaugeFile, function(error, data) {
+                    if (error) {
+                        document.getElementById("hydrograph").innerHTML = "Sorry, the file could not be found. Please try another option."
+                        throw error;
+                    };
+                    
+                    console.clear();
+
+                    // format the data
+                    data.forEach(function(d, i) {
+                        if (i == 0) cb = +d[specCdtCol];
+                        
+                        d.date = parseDate(d.datetime);
+                        d.discharge = +d[dischargeCol];
+                        d.precip = +d[precipCol];
+                        d.spec_cdt = +d[specCdtCol];
+                        d.baseflow = d.discharge*((d.spec_cdt-ce)/(cb-ce));
+                        d.eventflow = d.discharge - d.baseflow;
+                    });
+                    console.log(data[1]);
+                    callback(data);
+                });
+            }
+            
+            function customGraph() {
+                var siteNum, startDate, endDate, customURL, customTURL;
+                
+                siteNum = document.forms['custom'].elements['site-num'].value;
+                startDate = document.forms['custom'].elements['custom-start'].value;
+                endDate = document.forms['custom'].elements['custom-end'].value;
+                
+                customURL = "https://waterservices.usgs.gov/nwis/iv/?format=json&sites=" + siteNum + "&startDT=" + startDate + "&endDT=" + endDate + "&parameterCd=00060,00045,00095";
+                
+                customTURL = "https://waterservices.usgs.gov/nwis/iv/?format=rdb&sites=" + siteNum + "&startDT=" + startDate + "&endDT=" + endDate + "&parameterCd=00060,00045,00095";
+                
+                document.getElementById("load-outcome2-text").innerHTML = "";
+                document.getElementById("load-outcome2-text").innerHTML += "<a href='" + customURL + "'>See JSON Data<a/>"
+                document.getElementById("load-outcome2-text").innerHTML += "<br/><a href='" + customTURL + "'>See TSV Data<a/>"
+                
+                var jsonData =[];
+                
+//                console.clear();
+                
+                $(document).ready(function() {
+                    $.get(customURL, function(data) {
+                        jsonData = jsonGrabberHelper(data);
+                        console.log(jsonData);
+                    }, "json")
+                    .fail(function() {
+                        console.log("Failed to grab data...");
+                        document.getElementById("load-outcome2").innerHTML = "&#x274c";
+                        document.getElementById("load-outcome2-text").innerHTML = "Please enter a valid site number and date range!";
+                    })
+                    .done(function() {
+                        data = jsonData;
+                        createGraph(data);
+                        console.log("Got it!");
+//                        console.log(typeof data[4669].date);
+                        if (data.length == 0) {
+                            document.getElementById("load-outcome2").innerHTML = "&#x274c"; //red X
+                            document.getElementById("hydrograph").innerHTML = "Although the data was able to load correctly, this site does NOT have all the necessary parameters (discharge, precipitation, specific conductance)";
+                        } else {
+                            document.getElementById("load-outcome2").innerHTML = "&#x2705"; //green check
+                        }
+                    });
+                });
+            }
+            
+            function jsonGrabber(url, minPrecip, daysBefore, daysAfter) {
+                var jsonData =[];
+                
+//                console.clear();
+                
+                $(document).ready(function() {
+                    $.get(url, function(data) {
+                        jsonData = jsonGrabberHelper(data);
+                        console.log(jsonData);
+                    }, "json")
+                    .fail(function() {
+                        console.log("Failed to grab data...");
+                        document.getElementById("load-outcome").innerHTML = "&#x274c";
+                    })
+                    .done(function() {
+                        data = jsonData;
+                        createGraph(data);
+                        console.log("Got it!");
+//                        console.log(typeof data[4669].date);
+                        if (data.length == 0) {
+                            document.getElementById("load-outcome").innerHTML = "&#x274c"; //red X
+                            document.getElementById("hydrograph").innerHTML = "Although the data was able to load correctly, this site does NOT have all the necessary parameters (discharge, precipitation, specific conductance)";
+                        } else {
+                            document.getElementById("load-outcome").innerHTML = "&#x2705"; //green check
+                            potentialGraphs(data, minPrecip, daysBefore, daysAfter);
+                        }
+//                        var vals = rangeAnalysis(jsonData, minPrecip, daysBefore, daysAfter);
+//                        console.log(jsonData[1]);
+                        
+                    });
+                    
+//                    fail &#x274c; - red X
+//                    done &#x2705; - green check
+                });
+            }
+            
+            function jsonGrabberHelper(data) {
+                var parsedDate, parsedDischarge, parsedPrecip, parsedSC;
+                var pdP, pdD, pdS;
+                var jsonData =[];
+                var jsonObject = new Object;
+                var parseDateUTC = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%Z");
+                var iP = 0; //index precip
+                var iD = 0; //index discharge
+                var iS = 0; //index spec cdt
+                var mScmTop, mScmBottom;
+                
+                console.clear();
+                
+//                console.log(data.value.timeSeries[2].values[0].value);
+                if ((data.value.timeSeries[0].values[0].value.length == 0) || (data.value.timeSeries[1].values[0].value.length == 0) || (data.value.timeSeries[2].values[0].value.length == 0)) {
+                    return jsonData;
+                }
+                
+                var dlP = data.value.timeSeries[0].values[0].value.length;
+                var dlD = data.value.timeSeries[1].values[0].value.length;
+                var dlS = data.value.timeSeries[2].values[0].value.length;
+                var dataLength = Math.min(dlP, dlD, dlS);
+                
+                console.log("lengths (P,D,S): " + dlP + ", " + dlD + ", " + dlS);
+                
+//                console.log(dataLength);
+                for(var di = 0; di < dataLength; di++) {    //dataIndex
+                    
+                    //check same datetime
+                    pdP = parseDateUTC(data.value.timeSeries[0].values[0].value[iP].dateTime);
+                    pdD = parseDateUTC(data.value.timeSeries[1].values[0].value[iD].dateTime);
+                    pdS = parseDateUTC(data.value.timeSeries[2].values[0].value[iS].dateTime);
+                    
+//                    console.log("Date before (P,D,S): " + pdP + ", " + pdD + ", " + pdS);
+                    parsedDate = Math.max(pdP, pdD, pdS);
+                    while (pdP < parsedDate) {
+                        //bounds check
+                        if (iP < dlP-1) {
+                            iP++;
+                            pdP = parseDateUTC(data.value.timeSeries[0].values[0].value[iP].dateTime);
+                        } else {break;}
+                    }
+                    while (pdD < parsedDate) {
+                        //bounds check
+                        if (iD < dlD-1) {
+                            iD++;
+//                            console.log(data.value.timeSeries[1].values[0].value[iD]);
+                            pdD = parseDateUTC(data.value.timeSeries[1].values[0].value[iD].dateTime);
+                        } else {break;}
+                    }
+                    while (pdS < parsedDate) {
+                        //bound check
+                        if (iS < dlS-1) {
+                            iS++;
+                            pdS = parseDateUTC(data.value.timeSeries[2].values[0].value[iS].dateTime);
+                        } else {break;}
+                    }
+                    
+//                    console.log("Date after (P,D,S): " + pdP + ", " + pdD + ", " + pdS);
+                    
+//                    console.log((pdP.getTime() === pdD.getTime()) && (pdD.getTime() === pdS.getTime()));
+                    
+                    if((pdP.getTime() === pdD.getTime()) && (pdD.getTime() === pdS.getTime())) {
+                        for(var c = 0; c < 3; c++) {             //classifier
+                            if (c == 0) {
+                                jsonObject["date"] = new Date(parsedDate);
+
+                                parsedPrecip = parseFloat(data.value.timeSeries[c].values[0].value[iP].value);
+                                jsonObject["precip"] = parsedPrecip;
+                            } else if (c == 1) {
+                                parsedDischarge = parseFloat(data.value.timeSeries[c].values[0].value[iD].value);
+                                jsonObject["discharge"] = parsedDischarge;
+                            } else if (c == 2) {
+//                                console.log(di);
+                                parsedSC = parseFloat(data.value.timeSeries[c].values[0].value[iS].value);
+                                jsonObject["spec_cdt"] = parsedSC;
+
+                                if (di == 0) cb = jsonObject["spec_cdt"];
+                                
+                                // this is NOT the original equation our client gave us
+                                mScmTop = Math.abs(Math.min(jsonObject["spec_cdt"]-ce, cb-ce));
+                                mScmBottom = Math.max(jsonObject["spec_cdt"]-ce, cb-ce);
+                                jsonObject["baseflow"] = jsonObject["discharge"]*(mScmTop/mScmBottom);
+
+                                //here is the original equation
+//                                jsonObject["baseflow"] = jsonObject["discharge"]*((jsonObject["spec_cdt"]-ce)/(cb-ce));
+
+                                jsonObject["eventflow"] = jsonObject["discharge"] - jsonObject["baseflow"];
+                            }
+    //                        console.log(jsonObject);
+                        }
+                        jsonData.push(jsonObject);
+                        jsonObject = new Object;
+                        if (iP < dlP-1) {iP++;}
+                        if (iD < dlD-1) {iD++;}
+                        if (iS < dlS-1) {iS++;}
+                    }
+                }
+                
+                return jsonData;
+            }
+            
+            function jsonGrabberAJAX(url, callback) { //add url, callback to parameters later
+                var parsedDate, parsedDischarge, parsedPrecip, parsedSC;
+                var jsonData =[];
+                var jsonObject = new Object;
+                var parseDateUTC = d3.utcParse("%Y-%m-%dT%H:%M:%S.%L%Z");
+                
+                console.clear();
+                
+                $(document).ready(function() {
+                    // deprecated but we could still use it???
+                    $.ajax({
+                        url: url,
+                        type: 'get',
+                        dataType: 'json',
+                        async: false,
+                        success: function(data) {
+                            var dataLength = data.value.timeSeries[0].values[0].value.length;
+                            for(var di = 0; di < dataLength; di++) {    //dataIndex
+                                for(var c = 0; c < 3; c++) {             //classifier
+                                    if (c == 0) {
+                                        parsedDate = parseDateUTC(data.value.timeSeries[c].values[0].value[di].dateTime);
+//                                        console.log(parsedDate);
+                                        jsonObject["date"] = parsedDate;
+                                        
+                                        parsedPrecip = parseFloat(data.value.timeSeries[c].values[0].value[di].value);
+                                        jsonObject["precip"] = parsedPrecip;
+                                    } else if (c == 1) {
+                                        parsedDischarge = parseFloat(data.value.timeSeries[c].values[0].value[di].value);
+                                        jsonObject["discharge"] = parsedDischarge;
+                                    } else if (c == 2) {
+                                        parsedSC = parseFloat(data.value.timeSeries[c].values[0].value[di].value);
+                                        jsonObject["spec_cdt"] = parsedSC;
+                                        
+                                        if (di == 0) cb = jsonObject["spec_cdt"];
+                                        
+                                        jsonObject["baseflow"] = jsonObject["discharge"]*((jsonObject["spec_cdt"]-ce)/(cb-ce));
+                                        
+                                        jsonObject["eventflow"] = jsonObject["discharge"] - jsonObject["baseflow"];
+                                    }
+    //                                console.log(jsonObject);
+//                                    console.log(c + ", " + di);
+                                }
+                                jsonData.push(jsonObject);
+                                jsonObject = new Object;
+                            }
+                        } 
+                     });
+//                    console.log(jsonData);
+                    callback(jsonData);
+                });
+            }
+            
+            function jsonDataOnCommand() {
+                var period = document.forms['parameters'].elements['period'].value;
+                var mp = document.forms['parameters'].elements['min-precip'].value;
+                var daysB = document.forms['parameters'].elements['days-before'].value;
+                var daysA = document.forms['parameters'].elements['days-after'].value;
+                
+                gaugeID = document.getElementById("gauge").value;
+                
+                document.getElementById("graph-title").innerHTML = document.getElementById(gaugeID).innerHTML;
+                document.getElementById("hydrograph").innerHTML = "";
+                document.getElementById("load-outcome-text").innerHTML = "";
+                
+                var usgsURL = "https://nwis.waterservices.usgs.gov/nwis/iv/?format=json&sites=" + gaugeID + "&period=P" + period + "D&parameterCd=00060,00045,00095";
+                
+                var tsvURL = "https://nwis.waterservices.usgs.gov/nwis/iv/?format=rdb&sites=" + gaugeID + "&period=P" + period + "D&parameterCd=00060,00045,00095";
+                
+//                jsonGrabberAJAX(usgsURL, function(jsonData) {
+//                    createGraph(jsonData);
+//                });
+                document.getElementById("load-outcome-text").innerHTML += "<a href='" + usgsURL + "'>See JSON Data<a/>"
+                document.getElementById("load-outcome-text").innerHTML += "<br/><a href='" + tsvURL + "'>See TSV Data<a/>"
+                
+                jsonGrabber(usgsURL, mp, daysB, daysA);
+            }
+            
+            function dataOnCommand() {
+                gaugeID = document.getElementById("gauge").value;
+                gaugeFile = gaugeID + "_100.txt";
+                var mp = document.forms['parameters'].elements['min-precip'].value;
+                var daysB = document.forms['parameters'].elements['days-before'].value;
+                var daysA = document.forms['parameters'].elements['days-after'].value;
+                
+                dataGrabber(gaugeFile, function(originalData) {
+                    data = originalData;
+                    createGraph(data);
+                    var graphButtons, start, end;
+                    
+                    //%%%% MANIPULATE DATA HERE %%%%
+                    potentialGraphs(data, mp, daysB, daysA);
+//                    var testVals = rangeAnalysis(data, mp, daysB, daysA);
+//                    
+//                    testVals.forEach(function(dateRange) {
+////                        createAlgoGraph(data, dateRange[0], dateRange[1]);
+//                        console.log("Graphable from: " + dateRange[0] + " to " + dateRange[1]);
+////                        console.log(formatDate(data[dateRange[0]].date));
+//                        
+//                        start = (dateRange[0] == -1) ? "<--" : formatDate(data[dateRange[0]].date);
+//                        
+//                        end = (dateRange[1] == -1) ? "-->" : formatDate(data[dateRange[1]].date);
+//                        
+//                        graphButtons = "<input type='button' class='button' onclick='createAlgoGraph(data," + dateRange[0] + ", " + dateRange[1] + ")' value='" + start + " to " + end + "'>"
+//                        
+//                        document.getElementById("potential-graphs").innerHTML += graphButtons;
+//                    })
+                });
+            }
+            
+            function potentialGraphs(dataDict, minPrecip, daysBefore, daysAfter) {
+                var testVals = rangeAnalysis(dataDict, minPrecip, daysBefore, daysAfter);
+                    
+                //clear the window after pressing another bu1tton
+                document.getElementById("potential-graphs").innerHTML = "";
+                
+                testVals.forEach(function(dateRange) {
+                    console.log(dateRange);
+                    console.log("Graphable from: " + dateRange[0] + " to " + dateRange[1]);
+
+                    start = (dateRange[0] == -1) ? "<--" : formatDate(dataDict[dateRange[0]].date);
+
+                    end = (dateRange[1] == -1) ? "-->" : formatDate(dataDict[dateRange[1]].date);
+
+                    //letting us look at the extremity graphs
+                    if (dateRange[0] == -1) {dateRange[0] = 0;}
+                    if (dateRange[1] == -1) {dateRange[1] = dataDict.length-1;}
+                    
+                    graphButtons = "<input type='button' class='button' onclick='createAlgoGraph(data," + dateRange[0] + ", " + dateRange[1] + ")' value='" + start + " to " + end + "'>"
+                    
+//                    graphButtons = "<input type='button' class='button' onclick='createAlgoGraph(jsonData," + dateRange[0] + ", " + dateRange[1] + ")' value='" + start + " to " + end + "'>"
+
+                    document.getElementById("potential-graphs").innerHTML += graphButtons;
+                });
+            }
+            
+            function formatDate(fullDate) {
+                var m,d,y, dateObj, formattedDate;
+                
+//                if (typeof fullDate === 'number' ) {
+//                    dateObj = new Date(fullDate);
+//                    m = dateObj.getMonth() +1;
+//                    d = dateObj.getDate();
+//                    y = dateObj.getFullYear();
+//
+//                    formattedDate = m + "/" + d + "/" + y;
+//
+//                    return formattedDate;
+//                }
+                
+                m = fullDate.getMonth() +1;
+                d = fullDate.getDate();
+                y = fullDate.getFullYear();
+                
+                formattedDate = m + "/" + d + "/" + y;
+                
+                return formattedDate;
+            }
+            
+            function createAlgoGraph(originalData, startIndex, endIndex) {
+                var algoData = [];
+                for (i = startIndex; i < endIndex; i++) {
+                    algoData.push(originalData[i]);
+                }
+                createGraph(algoData);
+            }
+            
+            function createGraph(data) {
+                document.getElementById("graph-title").innerHTML = document.getElementById(gaugeID).innerHTML;
+                document.getElementById("hydrograph").innerHTML = "";
+
+                // append the svg obgect to the body of the page
+                // appends a 'group' element to 'svg'
+                // moves the 'group' element to the top left margin
+                var svg = d3.select("#hydrograph").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform",
+                          "translate(" + margin.left + "," + margin.top + ")");
+                
+                //Scale the range of the data
+                x.domain(d3.extent(data, function(d) {return d.date;}));
+                yl.domain([0, d3.max(data, function(d) {return d.discharge;})]);
+                yr.domain([0, d3.max(data, function(d) {return d.precip;})]);
+
+
+                //New append lines
+                svg.append("path")
+                    .data([data])
+                    .attr("class", "line1")
+                    .attr("d", line1);
+
+                svg.append("path")
+                    .data([data])
+                    .attr("class", "line2")
+                    .attr("d", line2);
+
+                svg.append("path")
+                    .data([data])
+                    .attr("class", "line3")
+                    .attr("d", line3);
+
+                svg.append("path")
+                    .data([data])
+                    .attr("class", "line4")
+                    .attr("d", line4);
+
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b-%d")));
+
+                svg.append("text")             
+                    .attr("transform", "translate(" + (width/2) + " ," + 
+                          (height + margin.top + 20) + ")")
+                    .style("text-anchor", "middle")
+                    .text("Date and Time");
+
+                svg.append("g")
+                    .call(d3.axisLeft(yl));
+
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 0 - margin.left)
+                    .attr("x",0 - (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Discharge (cu. ft/s)"); 
+
+                svg.append("g")
+                    .attr("transform", "translate( " + width + ", 0 )")
+                    .call(d3.axisRight(yr));
+
+                svg.append("text")
+                    .attr("transform", "rotate(90)")
+                    .attr("y", 0 - width - margin.right)
+                    .attr("x", (height / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor", "middle")
+                    .text("Precipitation (total in.)");
+                
+                svg.append("rect")
+                    .attr("x", height*1.5);
+                
+                svg.append("circle")
+                    .attr("class", "line1")
+                    .attr("cy", 15);
+                
+                svg.append("circle")
+                    .attr("class", "line2")
+                    .attr("cy", 35);
+                
+                svg.append("circle")
+                    .attr("class", "line3")
+                    .attr("cy", 55);
+                
+                svg.append("circle")
+                    .attr("class", "line4")
+                    .attr("cy", 75);
+                
+                svg.append("text")
+                    .attr("class", "legend-text")
+                    .attr("fill", "steelblue")
+                    .attr("x", 670)
+                    .attr("y", 20.4)
+                    .text("Total Discharge");
+                
+                svg.append("text")
+                    .attr("class", "legend-text")
+                    .attr("fill", "darkorchid")
+                    .attr("x", 670)
+                    .attr("y", 40.4)
+                    .text("Precipitation");
+                
+                svg.append("text")
+                    .attr("class", "legend-text")
+                    .attr("fill", "coral")
+                    .attr("x", 670)
+                    .attr("y", 60.4)
+                    .text("Baseflow Discharge");
+                
+                svg.append("text")
+                    .attr("class", "legend-text")
+                    .attr("fill", "forestgreen")
+                    .attr("x", 670)
+                    .attr("y", 80.4)
+                    .text("Event Flow Discharge");
+            }
+            
+            function rangeAnalysis(dataDict, minPrecip, daysBefore, daysAfter) {
+                var singleRange = [0,0];
+                var setOfRanges = [];
+                var start, end;
+                start = 0;
+                
+                //%%%%% this could go in an infinite loop if it doesnt end with -1 %%%%
+                // but maybe it does always end with -1...
+                while (end != -1) {
+                    cAnalysis = coreRange(dataDict, start, minPrecip);
+                    // cAnalysis[i] --- 0 = starting date, 1 = ending date, 2 = queue length
+                    start = precedingRange(dataDict, cAnalysis[0], cAnalysis[2], daysBefore);
+                    end = followingRange(dataDict, cAnalysis[1], cAnalysis[2], daysAfter);
+                    singleRange = [start, end];
+                    setOfRanges.push(singleRange);
+                    start = end;
+                }
+                
+                console.log(setOfRanges);
+                return setOfRanges;
+            }
+            
+            function coreRange(dataDict, startIndex, minPrecip) {
+                var queue = [];
+                queue.push(dataDict[0]);
+//                var startIndex = 0;
+                var endIndex = 0;
+                
+                for (i = startIndex; i < dataDict.length; i++) {
+                    dayChecker = queue[queue.length-1].date - queue[0].date
+                    if ( dayChecker < 86400000) { // 86400000ms in a day
+                        queue.push(dataDict[i]);
+                        if (i == dataDict.length - 1) {
+                            endIndex = i;
+                        }
+                    } else {
+                        var sum = 0;
+                        queue.forEach(function(line){
+                            sum += line.precip;
+                        });
+                        
+//                        console.log("sum is: " + sum);
+                        
+                        if (!(sum >= minPrecip)) {
+                            queue.shift();
+                            queue.push(dataDict[i]);
+                            startIndex += 1;
+                            endIndex = i;
+                        } else {
+                            startIndex += 1;
+                            endIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                var queueLen = queue.length;
+                
+                return [startIndex, endIndex, queueLen];
+            }
+            
+            function precedingRange(dataDict, endIndex, queueLen, daysPreceding) {
+//                var endIndex = findRowOfDate(dataDict, endDate);
+                var startIndex = endIndex - daysPreceding*queueLen;
+                var precip, currIndex;
+                
+                if (startIndex < 0) {
+                    return -1;
+                }
+                for (i = startIndex; i < endIndex; i++) {
+                    if (dataDict[i]["precip"] > 0) {
+//                        startIndex = precedingRange(dataDict, i, queueLen);
+                        precip = dataDict[i]["precip"];
+                        currIndex = i;
+                        break;
+                    }
+                }
+                if (precip === undefined) {
+//                    console.log(startIndex + " should be the beginning...");
+                    return startIndex;
+                }
+                
+                return precedingRange(dataDict, currIndex, queueLen, daysPreceding);
+//                return startIndex;
+            }
+            
+            function followingRange(dataDict, startIndex, queueLen, daysFollowing,) {
+                var endIndex = startIndex + daysFollowing*queueLen;
+                var precip, currIndex;
+                
+                if (endIndex >= dataDict.length) {
+                    return -1;
+                }
+                
+                //trying to find the last index of rain
+                for (i = endIndex; i > startIndex; i--) {
+                    if (dataDict[i]["precip"] > 0) {
+//                        console.log("going forward - new starting index: " + i);
+//                        console.log("\tcurrent ending index: " + endIndex);
+//                        endIndex = followingRange(dataDict, i, queueLen, daysFollowing);
+                        precip = dataDict[i]["precip"];
+                        currIndex = i;
+                        break;
+                    }
+                }
+                if (precip === undefined) {
+//                    console.log(endIndex + " should be the end...");
+                    return  endIndex;
+//                    console.log("does this work");
+                }
+                
+//                console.log("does it continue after returning");
+                return followingRange(dataDict, currIndex, queueLen, daysFollowing);
+//                return endIndex;
+            }
+        </script>
+    </body>
+    
+</html>

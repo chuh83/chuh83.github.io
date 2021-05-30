@@ -1,0 +1,60 @@
+.header {
+    background-color: #ffffff;
+    max-width: 1280px;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+#banner {
+    display: block;
+    height: 100%;
+    margin-left:auto;
+    margin-right:auto;
+    background-color: #ffffff;
+}
+
+#sfBanner {
+    width: 256px;
+    height: 124px;
+    margin: auto;
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.content {
+    display: block;
+    justify-content: center;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 1%;
+    padding-bottom: 124px;
+    align-self: center;
+
+    max-width: 1280px;
+    background-color: #41aade;
+    opacity: 90%;
+    color: white;
+    font-family: sans-serif;
+}
+
+body {
+    background-color: #ea212d;
+}
+
+table {
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+caption {
+    font-size: 130%;
+    font-weight: bold;
+}
+
+th, td {
+    padding: 3%;
+    border-bottom: 2px solid #ddd;
+}

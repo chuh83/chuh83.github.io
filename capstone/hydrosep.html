@@ -1,0 +1,249 @@
+<!Doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- This enables Bootstrap to be optimized for mobile devices -->
+    
+        <link rel="icon" type="image/png" href="images/flask_icon.png">
+        <link rel="stylesheet" type="text/css" href="hydroCSS.css">
+        
+        <script src="https://d3js.org/d3.v4.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="hydroJS.js"></script>
+<!--        These sources help exporting graph. From 
+http://bl.ocks.org/Rokotyan/0556f8facbaf344507cdc45dc3622177-->
+        <script src="graphSaver.js"></script>
+        <script src="https://cdn.rawgit.com/eligrey/FileSaver.js/e9d941381475b5df8b7d7691013401e171014e89/FileSaver.min.js"></script>
+<!--    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    -->
+        
+        <title>HydroGraphD</title>
+        <h1>HydroGraphD</h1>
+    </head>
+    
+    <body>
+        <h2>About</h2>
+        <p>Using the instantaneous values service from the <a href="https://waterdata.usgs.gov/nwis/rt">USGS National Water Information System Database</a>, HydroGraphD (pronounced 'hydrographed', short for HydroGraphData) is able to find precipitation events and plot the hydrograph separation within the last 120 days. Users are also able to graph data from USGS if they have the site number and date range in mind. There is also the option of saving data as a CSV file.</p>
+        <p>***NOTE: These graphs may be affected by a number of variables. They are NOT quality assured.***</p>
+    
+<!--
+        <hr/>
+        <div id="parameters-container">
+        </div>
+-->
+        <hr/>
+        <div id="option1-container" class="option-container">
+            <h2 class="option-title">Option 1 - Period Analysis</h2>
+            <p>Select a stream gauge:
+            <br/>
+            <select id="gauge">
+                <option value="06893620" id="06893620" selected="selected">06893620 Rock Creek at Kentucky Road in Independence, MO</option>
+                <option value="06893820" id="06893820">06893820 Little Blue R. at Lees Summit Rd in Independence</option>
+                <option value="06893890" id ="06893890">06893890 East Fork Little Blue River near Blue Springs, MO</option>
+                <option value="06893970" id="06893970">06893970 Spring Branch Ck at Holke Rd in Independence, MO</option>
+                <option value="06894000" id="06894000">06894000 Little Blue River near Lake City, MO</option>
+                <option value="06901500" id ="06901500">06901500 Locust Creek near Linneus, MO</option>
+                <option value="06934500" id="06934500">06934500 Missouri River at Hermann, MO</option>
+                <option value="07061270" id="07061270">07061270 East Fork Black River near Lesterville, MO</option>
+                <option value="07061290" id="07061290">07061290 E. Fk. Black R. bl Lower Taum Sauk Reservoir</option>
+            </select>
+            </p>
+            <form name="parameters">
+                <p>Number of days to analyze before today (max 120): 
+                <input type="text" name="period" class="input-box" value="100"></p>
+                <p>Minimum amount of precipitation (inches) to look for:
+                <input type="text" name="min-precip" class="input-box" value="0.05"></p>
+                <p>Number of days before precipitation event:
+                <input type="text" name="days-before" class="input-box" value="1"></p>
+                <p>Number of days after precipitation event:
+                <input type="text" name="days-after" class="input-box" value="5"></p>
+                
+<!--                <input type="button" onclick="dataOnCommand()" value="Find Graphs!">-->
+            </form>
+            <p><input type="button" onclick="jsonDataOnCommand()" value="Search"><span id="load-outcome"></span></p>
+            <div id='outcome1-box'>
+                <p id="load-outcome-text"></p>
+                <p id='option1-save'></p>
+            </div>
+            <div id='potential-box'>
+                <hr/>
+                <h3>List of potential graphs:</h3>
+                <div id="potential-graphs"></div>
+            </div>
+        </div>
+        
+        <div id="option2-container" class="option-container">
+            <form name="custom">
+                <h2 class="option-title">Option 2 - Custom Graph</h2>
+                <p>Site Number: <input type="text" name="site-num" class="input-long" maxlength="8" value="06893620"></p>
+                <p id="date-limit"></p>
+                <p>Start Date: <input type="text" id="custom-start" name="custom-start" class="input-long" placeholder="YYYY-MM-DD"></p>
+                <p>End Date: <input type="text" id="custom-end" name="custom-end" class="input-long" placeholder="YYYY-MM-DD"></p>
+                <p><input type="button" onclick="customGraph()" value="Plot"><span id="load-outcome2"></span></p>
+                <div id='outcome2-box'>
+                    <p id="load-outcome2-text"></p>
+                    <p id='option2-save'></p>
+                </div>
+            </form>
+        </div>
+        
+        <div id='graph-container'>
+            <hr/>
+            <h2 id='graph-title'>Example Graphs</h2>
+            <h3>Current Hydrograph</h3>
+<!--
+            <fieldset id="legend">
+                <legend><i>Legend</i></legend>
+                <div id="legend-contents">
+                    <p>
+                        <svg class="key"><circle class="line1"/></svg>
+                        <em class="line1"> Total Discharge </em>
+                    </p>
+                    <p>
+                        <svg class="key"><circle class="line2"/></svg>
+                        <em class="line2"> Precipitation </em>
+                    </p>
+                    <p>
+                        <svg class="key"><circle class="line3"/></svg>
+                        <em class="line3"> Baseflow Discharge </em>
+                    </p>
+                    <p>
+                        <svg class="key"><circle class="line4"/></svg>
+                        <em class="line4"> Event Flow Discharge </em>
+                    </p>
+                    <p>
+                        <svg class="key"><circle class="line5"/></svg>
+                        <em class="line5"> Specific Conductance </em>
+                    </p>
+                </div>
+            </fieldset>
+-->
+            <div id="legend-contents">
+                <p>
+                    <svg class="key" onclick="toggleLine(1);"><circle id="leg1" class="line1F"/></svg>
+                    <em class="line1F" onclick="toggleLine(1);"> Total Discharge </em>
+                </p>
+                <p>
+                    <svg class="key" onclick="toggleLine(2);"><circle id="leg2" class="line2F"/></svg>
+                    <em class="line2" onclick="toggleLine(2);"> Precipitation </em>
+                </p>
+                <p>
+                    <svg class="key" onclick="toggleLine(3);"><circle id="leg3" class="line3F"/></svg>
+                    <em class="line3" onclick="toggleLine(3);"> Baseflow Discharge </em>
+                </p>
+                <p>
+                    <svg class="key" onclick="toggleLine(4);"><circle id="leg4" class="line4F"/></svg>
+                    <em class="line4" onclick="toggleLine(4);"> Event Flow Discharge </em>
+                </p>
+                <p>
+                    <svg class="key" onclick="toggleLine(5);"><circle id="leg5" class="line5F"/></svg>
+                    <em class="line5" onclick="toggleLine(5);"> Specific Conductance </em>
+                </p>
+            </div>
+            
+            <div class='graph' id='hydrograph'>
+                <img src="images/hydrograph_ex1.png"
+                     alt="Hydrograph1"
+                     title="Hydrograph1"><br>
+            </div>
+
+<!--
+            <h3>Predicted Hydrograph</h3>
+            <div class='graph' id='predicted-graph'>
+                <img src="images/hydrograph_ex1.png"
+                     alt="FutureHydrograph1"
+                     title="FutureHydrograph1"><br>
+            </div>
+-->
+<!--        end of graph container    -->
+        </div>
+<!--        <p><input type="button" value="Save Graph" onclick="saveGraph()"></p>-->
+        <div id="save-graph">
+            <button id='save-button'>Save Graph</button>
+        </div>
+<!--        <canvas id="pic" width="1000" height="500" style="display:none;"></canvas>-->
+        
+        <script>
+            var currDate = new Date();
+            var dateLimit = currDate - 86400000*120; // 86400000 ms in a day, 120 days
+            var earlistDate = new Date(dateLimit);
+            
+            document.getElementById("date-limit").innerHTML = "**The earliest possible start date is: " + formatDate(earlistDate, "-");
+            document.getElementById("custom-start").setAttribute("value", formatDate(earlistDate, "-"));
+            document.getElementById("custom-end").setAttribute("value", formatDate(currDate, "-"));
+            
+            
+            var margin = {top: 20, right: 50, bottom: 50, left: 50},
+                maxWidth = 1000 - margin.left - margin.right,
+                width = 950 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+
+            //*********************************************
+            //****** All columns set to these vals ********
+            //*********************************************
+            var parseDate = d3.timeParse("%Y-%m-%d %H:%M");
+            var dischargeCol = "76944_00060";
+            var precipCol = "76946_00045";
+            var specCdtCol = "76948_00095";
+            var ce = 54;
+            var cb;
+
+            // set the ranges
+            var x = d3.scaleTime().range([0, width]);
+            var yl = d3.scaleLinear().range([height, 0]);
+            var yr = d3.scaleLinear().range([height, 0]);
+            var yr2 = d3.scaleLinear().range([height, 0]);
+
+            // define the lines
+            var line1 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yl(d.discharge);} );
+
+            var line2 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yr(d.precip);} );
+            
+            var line3 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yl(d.baseflow);} );
+            
+            var line4 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yl(d.eventflow);} );
+            
+            var line5 = d3.line()
+                .x( function(d) {return x(d.date);} )
+                .y( function(d) {return yr2(d.spec_cdt);} );
+            
+            var lines = [line1, line2, line3, line4, line5];
+            var lineNames = ["line1", "line2", "line3", "line4", "line5"];
+            var lineToggles = [true, true, true, true, true];
+            var legendItems = ["leg1", "leg2", "leg3", "leg4", "leg5"];
+            var filledIn = ["line1F", "line2F", "line3F", "line4F", "line5F"];
+            
+            var data;
+            var gaugeID = document.getElementById("gauge").value;
+            var gaugeFile = gaugeID + ".txt";
+            var svgString;
+            dataGrabber(gaugeFile, function(originalData) {
+//                var data = originalData;
+//                createGraph(data);  //initial page graph
+                createGraph(originalData);
+            });
+            
+            // Copied and slightly modified from
+            // http://bl.ocks.org/Rokotyan/0556f8facbaf344507cdc45dc3622177
+            // Set-up the export button
+             d3.select('#save-button').on('click', function(){
+                var svg = document.getElementById('svg-graph');
+                var svgString = getSVGString(svg);
+                svgString2Image( svgString, 2*width, 2*height, 'png', save ); // passes Blob and filesize String to the callback
+
+                function save( dataBlob, filesize ){
+                    saveAs( dataBlob, 'hydrograph.png' ); // FileSaver.js function
+                }
+            });
+        </script>
+    </body>
+    
+</html>
